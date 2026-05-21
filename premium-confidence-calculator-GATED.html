@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium Confidence Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --teal:#0F6E56;--teal-mid:#1D9E75;--teal-lt:#E1F5EE;--teal-dk:#085041;
+  --blue:#185FA5;--blue-lt:#E6F1FB;--pink:#993556;--pink-lt:#FBEAF0;
+  --gray-dk:#444441;--gray-mid:#888780;--gray-lt:#F1EFE8;--gray-bg:#F7F6F2;
+  --white:#fff;--black:#2C2C2A;--amber-lt:#FAEEDA;--amber:#854F0B;
+  --success-bg:#E1F5EEA0;--success-txt:#0F6E56;--success-border:#5DCAA5;
+  --info-bg:#E6F1FB;--info-txt:#185FA5;--info-border:#85B7EB;
+  --warn-bg:#FAEEDA;--warn-txt:#854F0B;--warn-border:#EF9F27;
+  --radius:10px;--radius-lg:16px;--shadow:0 2px 12px rgba(0,0,0,.06);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--gray-bg);color:var(--black);min-height:100vh;line-height:1.6}
+
+/* ── GATE SCREEN ── */
+#gate{position:fixed;inset:0;background:var(--teal);display:flex;align-items:center;justify-content:center;z-index:9999;padding:1.5rem}
+#gate.hidden{display:none}
+.gate-box{background:#fff;border-radius:var(--radius-lg);padding:2.5rem 2rem;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center}
+.gate-logo{font-family:'DM Serif Display',serif;font-size:22px;color:var(--teal);margin-bottom:.25rem}
+.gate-sub{font-size:13px;color:var(--gray-mid);margin-bottom:2rem;line-height:1.6}
+.gate-label{font-size:13px;font-weight:500;color:var(--gray-dk);text-align:left;margin-bottom:.5rem;display:block}
+.gate-input{width:100%;padding:12px 16px;border-radius:var(--radius);border:1.5px solid #E8E6DF;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;letter-spacing:.12em;text-align:center;margin-bottom:1rem;transition:border-color .2s}
+.gate-input:focus{border-color:var(--teal-mid)}
+.gate-btn{width:100%;padding:13px;border-radius:var(--radius);border:none;background:var(--teal);color:#fff;font-size:15px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background .2s}
+.gate-btn:hover{background:var(--teal-dk)}
+.gate-error{font-size:13px;color:#A32D2D;margin-top:.75rem;display:none}
+.gate-footer{font-size:11px;color:var(--gray-mid);margin-top:1.5rem;line-height:1.6}
+
+/* ── APP ── */
+#app{display:none}
+#app.visible{display:block}
+.hero{background:var(--teal);padding:3rem 1.5rem 2rem;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-40px;right:-40px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.05)}
+.hero::after{content:'';position:absolute;bottom:-60px;left:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.04)}
+.hero-tag{display:inline-block;background:rgba(255,255,255,.15);color:rgba(255,255,255,.9);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:5px 14px;border-radius:20px;margin-bottom:1rem}
+.hero h1{font-family:'DM Serif Display',serif;font-size:clamp(26px,5vw,40px);color:#fff;line-height:1.15;margin-bottom:.75rem;font-weight:400}
+.hero p{font-size:14px;color:rgba(255,255,255,.8);max-width:500px;margin:0 auto 1.5rem;line-height:1.7}
+.prog-wrap{display:flex;gap:5px;max-width:460px;margin:0 auto}
+.prog-step{height:4px;flex:1;border-radius:2px;background:rgba(255,255,255,.2);transition:background .3s}
+.prog-step.done{background:#5DCAA5}.prog-step.active{background:#fff}
+.main{max-width:680px;margin:0 auto;padding:1.5rem 1rem 3rem}
+.scr{display:none}.scr.on{display:block}
+.card{background:var(--white);border-radius:var(--radius-lg);border:1px solid #E8E6DF;padding:1.35rem;margin-bottom:1rem;box-shadow:var(--shadow)}
+.mod-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--teal-mid);margin-bottom:.35rem}
+.pg-title{font-family:'DM Serif Display',serif;font-size:24px;color:var(--black);margin-bottom:.35rem;font-weight:400;line-height:1.2}
+.pg-sub{font-size:14px;color:var(--gray-mid);margin-bottom:1.25rem;line-height:1.6}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:1.25rem}
+.mbox{background:var(--gray-lt);border-radius:var(--radius);padding:.9rem;text-align:center}
+.mbox .ml{font-size:11px;color:var(--gray-mid);margin-bottom:4px;line-height:1.3}
+.mbox .mv{font-size:22px;font-weight:500;color:var(--teal);line-height:1}
+.mbox .ms{font-size:11px;color:var(--gray-mid);margin-top:3px}
+.input-row{display:flex;align-items:center;gap:10px;margin-bottom:.9rem}
+.input-row label{font-size:13px;color:var(--gray-mid);min-width:150px;line-height:1.4}
+.input-row input[type=range]{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:#E8E6DF;outline:none}
+.input-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--teal-mid);cursor:pointer;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.val{font-size:14px;font-weight:500;min-width:62px;text-align:right;color:var(--black)}
+.btn-bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:1.25rem}
+.btn{padding:10px 20px;border-radius:var(--radius);border:1.5px solid #D3D1C7;font-size:14px;font-weight:500;cursor:pointer;background:var(--white);color:var(--black);font-family:'DM Sans',sans-serif;transition:all .15s}
+.btn:hover{background:var(--gray-lt)}
+.btn-primary{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn-primary:hover{background:var(--teal-dk);border-color:var(--teal-dk)}
+.a-green{background:#E1F5EE;color:var(--success-txt);border:1px solid var(--success-border);border-radius:var(--radius);padding:.85rem 1rem;font-size:13px;line-height:1.6;margin-bottom:.75rem}
+.a-blue{background:var(--info-bg);color:var(--info-txt);border:1px solid var(--info-border);border-radius:var(--radius);padding:.85rem 1rem;font-size:13px;line-height:1.6;margin-bottom:.75rem}
+.a-amber{background:var(--amber-lt);color:var(--amber);border:1px solid #EF9F27;border-radius:var(--radius);padding:.85rem 1rem;font-size:13px;line-height:1.6;margin-bottom:.75rem}
+.yn-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
+.yn-btn{padding:12px 14px;border-radius:var(--radius);border:1.5px solid #E8E6DF;font-size:13px;cursor:pointer;background:var(--white);color:var(--black);text-align:left;font-family:'DM Sans',sans-serif;transition:all .15s}
+.yn-btn:hover{border-color:var(--teal-mid);background:var(--teal-lt)}
+.yn-btn.sel{border-color:var(--teal-mid);background:var(--teal-lt);color:var(--teal-dk)}
+.yn-btn .yq{font-size:11px;margin:0 0 3px;opacity:.65;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.yn-btn .ya{font-size:14px;font-weight:500;margin:0}
+.fit-card{border-radius:var(--radius-lg);border:2px solid var(--teal-mid);padding:1.1rem;background:#E1F5EE;margin-bottom:1rem}
+.fit-card p{margin:0;font-size:13px;color:var(--success-txt);line-height:1.6}
+.mod-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+.mod-btn{padding:7px 16px;font-size:13px;font-weight:500;border-radius:20px;border:1.5px solid #E8E6DF;cursor:pointer;background:var(--white);color:var(--gray-mid);font-family:'DM Sans',sans-serif;transition:all .15s}
+.mod-btn:hover{border-color:var(--teal-mid);color:var(--teal)}
+.mod-btn.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.l-item{display:flex;align-items:flex-start;gap:12px;padding:1rem;border:1.5px solid #E8E6DF;border-radius:var(--radius);background:var(--white);margin-bottom:8px;transition:border-color .2s}
+.l-item.active-l{border-color:var(--teal-mid);background:var(--teal-lt)}
+.l-num{width:28px;height:28px;border-radius:50%;background:var(--gray-lt);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--gray-mid);flex-shrink:0}
+.l-item.active-l .l-num{background:var(--teal-mid);color:#fff}
+.l-title{font-size:14px;font-weight:500;color:var(--black);margin:0 0 3px}
+.l-desc{font-size:13px;color:var(--gray-mid);margin:0;line-height:1.6}
+.l-item.active-l .l-desc{color:var(--gray-dk)}
+.tier-row{display:flex;align-items:center;gap:12px;padding:.9rem 1rem;border-radius:var(--radius);margin-bottom:8px;background:var(--gray-lt)}
+.tier-label{font-size:13px;font-weight:500;min-width:100px}
+.tier-bar-wrap{flex:1;height:6px;border-radius:3px;background:#E8E6DF;overflow:hidden}
+.tier-fill{height:100%;border-radius:3px;transition:width .5s}
+.tier-val{font-size:14px;font-weight:600;min-width:72px;text-align:right}
+.leg{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px;font-size:12px;color:var(--gray-mid)}
+.leg span{display:flex;align-items:center;gap:6px}
+.ldot{width:10px;height:10px;border-radius:2px}
+.check-item{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.05)}
+.check-item:last-child{border-bottom:none}
+.check-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:12px}
+.score-big{font-family:'DM Serif Display',serif;font-size:64px;color:var(--teal);line-height:1;text-align:center;font-weight:400}
+.score-lbl{font-size:13px;color:var(--gray-mid);text-align:center;margin-top:4px}
+.step-item{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--info-bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--info-txt);flex-shrink:0}
+.footer{text-align:center;padding:2rem 1rem;font-size:12px;color:var(--gray-mid);border-top:1px solid #E8E6DF;max-width:680px;margin:0 auto}
+@media(max-width:520px){
+  .hero{padding:2rem 1rem 1.5rem}
+  .yn-grid{grid-template-columns:1fr}
+  .input-row label{min-width:120px;font-size:12px}
+  .tier-label{min-width:80px;font-size:12px}
+  .gate-box{padding:2rem 1.25rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ── ACCESS GATE ── -->
+<div id="gate">
+  <div class="gate-box">
+    <p class="gate-logo">Premium Confidence Calculator</p>
+    <p class="gate-sub">Enter your access code to unlock your personal IUL decision tool. Your code was delivered with your purchase receipt.</p>
+    <label class="gate-label" for="code-input">Access code</label>
+    <input class="gate-input" id="code-input" type="password" placeholder="Enter your code" autocomplete="off" onkeydown="if(event.key==='Enter')unlock()">
+    <button class="gate-btn" onclick="unlock()"><i class="ti ti-lock-open"></i> Unlock Calculator</button>
+    <p class="gate-error" id="gate-err"><i class="ti ti-alert-circle"></i> Incorrect code. Check your purchase receipt and try again.</p>
+    <p class="gate-footer">Purchased this product? Your access code is in your Gumroad receipt email.<br>Need help? Contact support.</p>
+  </div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div id="app">
+<div class="hero">
+  <div class="hero-tag">Financial Education Tool</div>
+  <h1>Premium Confidence<br>Calculator</h1>
+  <p>Make your IUL protection decision with clarity — not fear, confusion, or financial stress.</p>
+  <div class="prog-wrap" id="prog"></div>
+</div>
+
+<div class="main">
+
+<div id="s0" class="scr on">
+  <p class="mod-label">Quick win — first 10 minutes</p>
+  <p class="pg-title">Your Protection Number</p>
+  <p class="pg-sub">One calculation and three questions. Walk away with a real number and a real reason to move forward.</p>
+  <div class="card">
+    <p style="font-size:13px;font-weight:600;color:var(--black);margin-bottom:1rem">Step 1 — find your starter premium zone</p>
+    <div class="input-row">
+      <label>Monthly take-home pay</label>
+      <input type="range" id="qw-inc" min="2000" max="15000" step="500" value="5000" oninput="qwCalc()">
+      <span class="val" id="qw-inc-v">$5,000</span>
+    </div>
+    <div class="metric-grid">
+      <div class="mbox"><p class="ml">Your protection number</p><p class="mv" id="qw-n">$250</p><p class="ms">per month</p></div>
+      <div class="mbox"><p class="ml">Annual commitment</p><p class="mv" id="qw-a">$3,000</p><p class="ms">per year</p></div>
+      <div class="mbox"><p class="ml">Daily cost</p><p class="mv" id="qw-d">$8</p><p class="ms">per day</p></div>
+    </div>
+    <div class="a-blue" style="margin-bottom:0"><i class="ti ti-info-circle"></i> <strong>Formula:</strong> Monthly Take-Home &times; 5% = Your Protection Number</div>
+  </div>
+  <div class="card">
+    <p style="font-size:13px;font-weight:600;color:var(--black);margin-bottom:1rem">Step 2 — 3-question IUL fit check</p>
+    <div class="yn-grid">
+      <button class="yn-btn" id="q1y" onclick="pick(1,'y')"><p class="yq">Question 1</p><p class="ya"><i class="ti ti-check"></i> I have dependents</p></button>
+      <button class="yn-btn" id="q1n" onclick="pick(1,'n')"><p class="yq">Question 1</p><p class="ya"><i class="ti ti-x"></i> No dependents yet</p></button>
+      <button class="yn-btn" id="q2y" onclick="pick(2,'y')"><p class="yq">Question 2</p><p class="ya"><i class="ti ti-check"></i> I want money to grow</p></button>
+      <button class="yn-btn" id="q2n" onclick="pick(2,'n')"><p class="yq">Question 2</p><p class="ya"><i class="ti ti-x"></i> Just protection is fine</p></button>
+      <button class="yn-btn" id="q3y" onclick="pick(3,'y')"><p class="yq">Question 3</p><p class="ya"><i class="ti ti-check"></i> Major milestone ahead</p></button>
+      <button class="yn-btn" id="q3n" onclick="pick(3,'n')"><p class="yq">Question 3</p><p class="ya"><i class="ti ti-x"></i> No major milestone</p></button>
+    </div>
+    <div id="fit-res"></div>
+  </div>
+  <div class="btn-bar"><button class="btn btn-primary" onclick="go(1)">Start Module 1 <i class="ti ti-arrow-right"></i></button></div>
+</div>
+
+<div id="s1" class="scr">
+  <p class="mod-label">Module 1 of 5</p>
+  <p class="pg-title">Know what you're actually buying</p>
+  <p class="pg-sub">Cut through the jargon. You'll explain your policy in plain English by the end of this module.</p>
+  <div class="mod-nav" id="m1-nav"></div>
+  <div id="m1-body"></div>
+  <div class="btn-bar">
+    <button class="btn" onclick="go(0)"><i class="ti ti-arrow-left"></i> Back</button>
+    <button class="btn btn-primary" onclick="go(2)">Module 2 — premium plan <i class="ti ti-arrow-right"></i></button>
+  </div>
+</div>
+
+<div id="s2" class="scr">
+  <p class="mod-label">Module 2 of 5</p>
+  <p class="pg-title">Build a premium you can actually keep paying</p>
+  <p class="pg-sub">Map a commitment that fits your real life and real budget.</p>
+  <div class="mod-nav" id="m2-nav"></div>
+  <div id="m2-body"></div>
+  <div class="card">
+    <p style="font-size:13px;font-weight:600;color:var(--black);margin-bottom:1rem"><i class="ti ti-calculator"></i> Commitment clarity calculator</p>
+    <div class="input-row">
+      <label>Monthly take-home pay</label>
+      <input type="range" id="m2-inc" min="2000" max="15000" step="500" value="5000" oninput="m2Calc()">
+      <span class="val" id="m2-inc-v">$5,000</span>
+    </div>
+    <div class="input-row">
+      <label>Fixed monthly expenses</label>
+      <input type="range" id="m2-fix" min="500" max="8000" step="100" value="2500" oninput="m2Calc()">
+      <span class="val" id="m2-fix-v">$2,500</span>
+    </div>
+    <div id="m2-tiers" style="margin-bottom:1rem"></div>
+    <div id="m2-rec"></div>
+  </div>
+  <div class="btn-bar">
+    <button class="btn" onclick="go(1)"><i class="ti ti-arrow-left"></i> Back</button>
+    <button class="btn btn-primary" onclick="go(3)">Module 3 — watch money grow <i class="ti ti-arrow-right"></i></button>
+  </div>
+</div>
+
+<div id="s3" class="scr">
+  <p class="mod-label">Module 3 of 5</p>
+  <p class="pg-title">Understand what your money is doing</p>
+  <p class="pg-sub">See real cash value projections across 10, 20, and 30 years.</p>
+  <div class="mod-nav" id="m3-nav"></div>
+  <div id="m3-body"></div>
+  <div class="card">
+    <p style="font-size:13px;font-weight:600;color:var(--black);margin-bottom:.75rem"><i class="ti ti-chart-line"></i> Your 30-year money timeline</p>
+    <div class="input-row">
+      <label>Monthly premium</label>
+      <input type="range" id="m3-p" min="100" max="2000" step="50" value="300" oninput="m3Calc()">
+      <span class="val" id="m3-p-v">$300</span>
+    </div>
+    <div class="input-row">
+      <label>Annual index credit rate</label>
+      <input type="range" id="m3-r" min="4" max="9" step="0.5" value="6.5" oninput="m3Calc()">
+      <span class="val" id="m3-r-v">6.5%</span>
+    </div>
+    <div class="leg">
+      <span><span class="ldot" style="background:#1D9E75"></span>Cash value</span>
+      <span><span class="ldot" style="background:#378ADD"></span>Premiums paid</span>
+    </div>
+    <div style="position:relative;width:100%;height:260px"><canvas id="m3chart"></canvas></div>
+    <div class="metric-grid" style="margin-top:1rem" id="m3-metrics"></div>
+  </div>
+  <div class="btn-bar">
+    <button class="btn" onclick="go(2)"><i class="ti ti-arrow-left"></i> Back</button>
+    <button class="btn btn-primary" onclick="go(4)">Module 4 — use your policy <i class="ti ti-arrow-right"></i></button>
+  </div>
+</div>
+
+<div id="s4" class="scr">
+  <p class="mod-label">Module 4 of 5</p>
+  <p class="pg-title">Use your policy without breaking it</p>
+  <p class="pg-sub">Know when a policy loan makes sense — and when it doesn't.</p>
+  <div class="mod-nav" id="m4-nav"></div>
+  <div id="m4-body"></div>
+  <div class="card">
+    <p style="font-size:13px;font-weight:600;color:var(--black);margin-bottom:1rem"><i class="ti ti-checklist"></i> Policy loan — do / don't checklist</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background:#E1F5EE;border-radius:var(--radius);padding:.9rem">
+        <p style="font-size:12px;font-weight:600;color:var(--success-txt);margin-bottom:8px"><i class="ti ti-check"></i> DO take a loan when</p>
+        <div id="do-list"></div>
+      </div>
+      <div style="background:#FCEBEB;border-radius:var(--radius);padding:.9rem">
+        <p style="font-size:12px;font-weight:600;color:#A32D2D;margin-bottom:8px"><i class="ti ti-x"></i> DON'T take a loan when</p>
+        <div id="dont-list"></div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-bar">
+    <button class="btn" onclick="go(3)"><i class="ti ti-arrow-left"></i> Back</button>
+    <button class="btn btn-primary" onclick="go(5)">Module 5 — stay committed <i class="ti ti-arrow-right"></i></button>
+  </div>
+</div>
+
+<div id="s5" class="scr">
+  <p class="mod-label">Module 5 of 5</p>
+  <p class="pg-title">Stay committed and eliminate regret</p>
+  <p class="pg-sub">Build the habits that keep your policy — and your wealth — alive.</p>
+  <div class="mod-nav" id="m5-nav"></div>
+  <div id="m5-body"></div>
+  <div class="card">
+    <p style="font-size:13px;font-weight:600;color:var(--black);margin-bottom:1rem"><i class="ti ti-heart"></i> Life events — your action plan</p>
+    <div id="life-events"></div>
+  </div>
+  <div class="btn-bar">
+    <button class="btn" onclick="go(4)"><i class="ti ti-arrow-left"></i> Back</button>
+    <button class="btn btn-primary" onclick="go(6)">Get my confidence score <i class="ti ti-arrow-right"></i></button>
+  </div>
+</div>
+
+<div id="s6" class="scr">
+  <p class="mod-label">Your results</p>
+  <p class="pg-title">Confidence Score</p>
+  <p class="pg-sub">Based on your inputs across all 5 modules.</p>
+  <div class="card" style="text-align:center;padding:2rem 1.5rem">
+    <div class="score-big" id="sc-num">0</div>
+    <p class="score-lbl">out of 100</p>
+    <p style="font-size:17px;font-weight:500;color:var(--black);margin:1rem 0 .35rem" id="sc-title"></p>
+    <p style="font-size:13px;color:var(--gray-mid);margin:0 auto;line-height:1.6;max-width:440px" id="sc-desc"></p>
+  </div>
+  <div class="metric-grid" id="sc-breakdown"></div>
+  <div id="sc-alert"></div>
+  <div class="card">
+    <p style="font-size:13px;font-weight:600;color:var(--black);margin-bottom:1rem">Your 3 next steps</p>
+    <div id="sc-steps"></div>
+  </div>
+  <div class="btn-bar">
+    <button class="btn" onclick="go(5)"><i class="ti ti-arrow-left"></i> Back</button>
+  </div>
+</div>
+
+</div><!-- end .main -->
+
+<div class="footer">
+  <p><strong>Premium Confidence Calculator</strong> — by Synergize Wealth Education</p>
+  <p style="margin-top:6px">For educational purposes only. Not a licensed financial product or policy illustration.<br>Always work with a licensed insurance professional before purchasing any policy.</p>
+</div>
+</div><!-- end #app -->
+
+<script>
+// ─────────────────────────────────────────────
+// ACCESS GATE
+// To change your code: edit the value below.
+// Use letters and numbers, no spaces.
+// Example: "CLARITY2025" or "PCC-LAUNCH"
+// ─────────────────────────────────────────────
+const ACCESS_CODE = "CLARITY2025";
+
+function unlock(){
+  const input = document.getElementById('code-input').value.trim().toUpperCase();
+  const err = document.getElementById('gate-err');
+  if(input === ACCESS_CODE.toUpperCase()){
+    document.getElementById('gate').classList.add('hidden');
+    document.getElementById('app').classList.add('visible');
+    sessionStorage.setItem('pcc_unlocked','1');
+  } else {
+    err.style.display='block';
+    document.getElementById('code-input').style.borderColor='#A32D2D';
+    setTimeout(()=>{
+      err.style.display='none';
+      document.getElementById('code-input').style.borderColor='#E8E6DF';
+    },3000);
+  }
+}
+
+// Stay unlocked during the session (page refreshes won't re-lock)
+if(sessionStorage.getItem('pcc_unlocked')==='1'){
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('app').classList.add('visible');
+}
+
+// ─────────────────────────────────────────────
+// APP LOGIC
+// ─────────────────────────────────────────────
+const ST={q1:null,q2:null,q3:null,cur:0};
+let m3CI=null;
+const fmt=n=>'$'+Math.round(n).toLocaleString();
+
+const LESSONS={
+  1:{
+    1:{t:'The 3-part policy breakdown',d:'Every IUL has three parts: the <strong>death benefit</strong> (protection for your family), the <strong>cash value account</strong> (a growing pool you can access while alive), and the <strong>index-linked growth engine</strong> (earnings tied to a market index without direct market risk). Think of it like a house — foundation, savings room, and a window to the outside.'},
+    2:{t:'Floors, caps & credits explained',d:'The <strong>floor</strong> (usually 0%) means your account never loses value in a down market year. The <strong>cap</strong> (often 10–12%) is the maximum credit you earn in a great year. If the market drops 30%, you credit 0% — your money is protected. If it rises 18%, you may credit 11%. Your money grows safely between those two numbers.'},
+    3:{t:'Reading your illustration like a pro',d:'Your policy illustration has three columns. Focus on them in order: <strong>Guaranteed</strong> (worst case — ask "can I live with this?"), <strong>Mid-point</strong> (moderate, reasonable expectation), and <strong>Non-guaranteed</strong> (optimistic — possible, not promised). Always review the guaranteed column first before discussing projections with your agent.'}
+  },
+  2:{
+    1:{t:'The commitment clarity framework',d:'Three premium tiers exist: <strong>Minimum (3%)</strong> keeps the policy alive. <strong>Target (5%)</strong> builds real cash value — the most common starting point. <strong>Power (8%)</strong> maximizes funding speed. Most buyers start at Target and grow to Power within 2–3 years as income increases. Use the calculator below to find your exact tier.'},
+    2:{t:'The skip-proof premium strategy',d:'Three built-in safety nets protect you if money gets tight: a <strong>grace period</strong> (30–61 days, no penalty), a <strong>premium loan</strong> from your cash value (available after years 3–5), and a <strong>reduce paid-up option</strong> (lower death benefit, lower obligation — last resort before lapse). There is always a path that is not canceling the policy.'},
+    3:{t:'Premium mapping exercise',d:'Take your take-home pay, subtract fixed expenses, and multiply the remainder by 0.20 to find your discretionary pool. Your Target premium (5% of income) should come comfortably out of that pool. If it does not, start at Minimum and revisit in 6 months. The calculator below does this math automatically.'}
+  },
+  3:{
+    1:{t:'Cash value vs. savings account',d:'A savings account earns 0.5–2% and is fully taxable. A 401(k) is taxable at withdrawal. IUL cash value grows <strong>tax-deferred</strong> and policy loans are <strong>tax-free income</strong>. Over 20–30 years, the after-tax difference is significant — especially for people in higher tax brackets running out of other tax-sheltered vehicles.'},
+    2:{t:'Index crediting explained simply',d:'You are NOT invested in the stock market. The insurer tracks the S&P 500\'s annual movement and credits your account accordingly — with a floor of 0% and a cap around 10–12%. No direct market exposure means no account value losses from market drops. Your money participates in gains and sits out the losses.'},
+    3:{t:'Year 1 to year 30 — your money timeline',d:'Years 1–3: slow build, most premium covers insurance costs. Years 4–7: growth accelerates. Years 8–15: compounding kicks in hard. Years 20–30: the policy can generate tax-free retirement income equal to or exceeding your original premium. The chart below shows your personal timeline based on your numbers.'}
+  },
+  4:{
+    1:{t:'Policy loans 101 — borrowing from yourself',d:'When you take a policy loan, you borrow <em>against</em> your cash value — not from it. Your full cash value continues earning index credits even while borrowed against. Loan interest goes back into the policy ecosystem, not to a bank. No credit check. No application. No approval process.'},
+    2:{t:'The surrender period survival guide',d:'Years 1–7 typically have <strong>surrender charges</strong> — a fee for canceling early. Think of this as your wealth lock-in period. After year 7, surrender charges disappear or become negligible. Most people who lapse do so in years 2–4 — right before it gets good. Patience here is worth tens of thousands of dollars.'},
+    3:{t:'Smart withdrawal strategies for retirement',d:'In retirement, combine <strong>tax-free policy loans</strong> and <strong>partial surrenders</strong> to create income the IRS cannot touch. This income does not push you into a higher tax bracket and does not affect Social Security taxation. A $400/month premium at 35 can generate $2,000–$3,500/month tax-free at 65.'}
+  },
+  5:{
+    1:{t:'The annual policy review ritual',d:'Once a year on your policy anniversary: <strong>check cash value vs. projection</strong>, <strong>confirm death benefit adequacy</strong>, <strong>review your premium tier</strong> (can you step up?), and <strong>update beneficiaries</strong>. This 20-minute ritual keeps you connected to your wealth and in full control of your policy.'},
+    2:{t:'Handling life changes without dropping your policy',d:'The 5 most common lapse triggers: <strong>Job loss</strong> — grace period then premium loan. <strong>Divorce</strong> — update beneficiary immediately. <strong>New baby</strong> — increase coverage, add child rider. <strong>Home purchase</strong> — use policy loan instead of surrendering. <strong>Medical bills</strong> — check accelerated death benefit rider.'},
+    3:{t:'The confident owner identity',d:'You are not someone who bought life insurance. You are a <strong>wealth-builder with a protected foundation</strong>. That identity shift is what separates 30-year policyholders from people who lapse in year 3. Mark your policy anniversaries. Celebrate your cash value milestones. Every year you hold this policy, compounding works harder for you.'}
+  }
+};
+
+function buildProg(){
+  const p=document.getElementById('prog');p.innerHTML='';
+  for(let i=0;i<=6;i++){const d=document.createElement('div');d.className='prog-step'+(i<ST.cur?' done':i===ST.cur?' active':'');p.appendChild(d);}
+}
+function go(n){
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  document.getElementById('s'+n).classList.add('on');ST.cur=n;buildProg();
+  if(n===1){initMod(1);showLesson(1,1);}
+  if(n===2){initMod(2);showLesson(2,1);m2Calc();}
+  if(n===3){initMod(3);showLesson(3,1);setTimeout(m3Calc,50);}
+  if(n===4){initMod(4);showLesson(4,1);buildChecklist();}
+  if(n===5){initMod(5);showLesson(5,1);buildLifeEvents();}
+  if(n===6)calcScore();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function qwCalc(){
+  const inc=+document.getElementById('qw-inc').value;
+  document.getElementById('qw-inc-v').textContent=fmt(inc);
+  const n=Math.round(inc*0.05);
+  document.getElementById('qw-n').textContent=fmt(n);
+  document.getElementById('qw-a').textContent=fmt(n*12);
+  document.getElementById('qw-d').textContent=fmt(Math.round(n*12/365));
+}
+function pick(q,a){
+  ['y','n'].forEach(x=>{const el=document.getElementById('q'+q+x);if(el)el.classList.toggle('sel',x===a);});
+  ST['q'+q]=a;checkFit();
+}
+function checkFit(){
+  const r=document.getElementById('fit-res');
+  const yes=(ST.q1==='y')+(ST.q2==='y')+(ST.q3==='y');
+  if(!ST.q1||!ST.q2||!ST.q3){r.innerHTML='';return;}
+  r.innerHTML=yes>=2
+    ?`<div class="fit-card"><p><strong><i class="ti ti-shield-check"></i> IUL-style protection is worth exploring for your family.</strong><br>You answered yes to ${yes} of 3 indicators. Continue through the modules to build full confidence.</p></div>`
+    :`<div class="a-amber"><strong>Worth a deeper look.</strong> You answered yes to ${yes} of 3. IUL may still fit — work through the modules to understand all the angles.</div>`;
+}
+function initMod(m){
+  document.getElementById('m'+m+'-nav').innerHTML=[1,2,3].map(l=>`<button class="mod-btn${l===1?' on':''}" id="m${m}l${l}-btn" onclick="showLesson(${m},${l})">Lesson ${l}</button>`).join('');
+}
+function showLesson(m,l){
+  [1,2,3].forEach(n=>{const b=document.getElementById('m'+m+'l'+n+'-btn');if(b)b.className='mod-btn'+(n===l?' on':'');});
+  const body=document.getElementById('m'+m+'-body');if(!body)return;
+  body.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:1rem">${[1,2,3].map(n=>`<div class="l-item${n===l?' active-l':''}"><div class="l-num">${n<l?'<i class="ti ti-check"></i>':n===l?'<i class="ti ti-circle-dot"></i>':n}</div><div><p class="l-title">${LESSONS[m][n].t}</p><p class="l-desc">${n===l?LESSONS[m][n].d:'Click the lesson tab above to explore this lesson.'}</p></div></div>`).join('')}</div>`;
+}
+function m2Calc(){
+  const inc=+document.getElementById('m2-inc').value,fix=+document.getElementById('m2-fix').value;
+  document.getElementById('m2-inc-v').textContent=fmt(inc);
+  document.getElementById('m2-fix-v').textContent=fmt(fix);
+  const tMin=Math.round(inc*0.03),tTgt=Math.round(inc*0.05),tPow=Math.round(inc*0.08),disc=Math.max(0,inc-fix);
+  document.getElementById('m2-tiers').innerHTML=[{l:'Minimum (3%)',v:tMin,c:'#1D9E75',w:38},{l:'Target (5%)',v:tTgt,c:'#378ADD',w:62},{l:'Power (8%)',v:tPow,c:'#D4537E',w:100}].map(t=>`<div class="tier-row"><span class="tier-label" style="color:${t.c}">${t.l}</span><div class="tier-bar-wrap"><div class="tier-fill" style="width:${t.w}%;background:${t.c}"></div></div><span class="tier-val" style="color:${t.c}">${fmt(t.v)}/mo</span></div>`).join('');
+  document.getElementById('m2-rec').innerHTML=disc>=tPow*1.5
+    ?`<div class="a-green"><i class="ti ti-star"></i> <strong>Power tier is within reach.</strong> Your discretionary pool (${fmt(disc)}/mo) supports ${fmt(tPow)}/mo. Maximize your policy from day one.</div>`
+    :disc>=tTgt*1.2
+    ?`<div class="a-green"><i class="ti ti-check"></i> <strong>Target tier is your sweet spot.</strong> Start at ${fmt(tTgt)}/mo and step up to Power as income grows.</div>`
+    :`<div class="a-blue"><i class="ti ti-info-circle"></i> <strong>Start at Minimum tier.</strong> ${fmt(tMin)}/mo keeps the policy alive. Review in 6 months as your budget shifts.</div>`;
+}
+function calcCV(prem,yrs,rate){let cv=0;const r=rate/100;for(let y=1;y<=yrs;y++){cv+=prem*12;if(y>2)cv*=(1+r);if(y<=7)cv*=0.97;}return Math.round(cv);}
+function m3Calc(){
+  const prem=+document.getElementById('m3-p').value,rate=+document.getElementById('m3-r').value;
+  document.getElementById('m3-p-v').textContent=fmt(prem);
+  document.getElementById('m3-r-v').textContent=rate.toFixed(1)+'%';
+  const yrs=Array.from({length:30},(_,i)=>i+1);
+  const cvD=yrs.map(y=>calcCV(prem,y,rate)),pdD=yrs.map(y=>Math.round(prem*12*y));
+  if(m3CI)m3CI.destroy();
+  const ctx=document.getElementById('m3chart');if(!ctx)return;
+  m3CI=new Chart(ctx,{type:'line',data:{labels:yrs.map(y=>y===1||y%5===0?'Yr '+y:''),datasets:[{label:'Cash value',data:cvD,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,.08)',tension:.35,pointRadius:0,borderWidth:2.5,fill:true},{label:'Premiums paid',data:pdD,borderColor:'#378ADD',backgroundColor:'transparent',tension:.2,pointRadius:0,borderWidth:2,borderDash:[6,3]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'$'+Math.round(v/1000)+'k',font:{size:11},color:'#888780'},grid:{color:'rgba(0,0,0,.05)'},border:{display:false}},x:{ticks:{font:{size:11},color:'#888780',autoSkip:false},grid:{display:false},border:{display:false}}}}});
+  document.getElementById('m3-metrics').innerHTML=`<div class="mbox"><p class="ml">Year 20 cash value</p><p class="mv">${fmt(cvD[19])}</p></div><div class="mbox"><p class="ml">Year 30 cash value</p><p class="mv">${fmt(cvD[29])}</p></div><div class="mbox"><p class="ml">Loan potential (80%)</p><p class="mv">${fmt(Math.round(cvD[29]*0.8))}</p></div><div class="mbox"><p class="ml">Total premiums paid</p><p class="mv">${fmt(pdD[29])}</p></div>`;
+}
+function buildChecklist(){
+  const dos=['Emergency funds needed, 3+ years of cash value built','Tax-free retirement income in year 20+','Business investment with a clear return plan','Short-term bridge with a plan to repay within 2 years'];
+  const donts=['Cash value is less than 2 years of premiums','No plan to repay or manage loan interest','Covering lifestyle spending with no end in sight','Still in the surrender period (years 1–7)'];
+  document.getElementById('do-list').innerHTML=dos.map(d=>`<div class="check-item"><div class="check-icon" style="background:#E1F5EE;color:#0F6E56"><i class="ti ti-check" style="font-size:12px"></i></div><span style="font-size:12px;color:#444441;line-height:1.5">${d}</span></div>`).join('');
+  document.getElementById('dont-list').innerHTML=donts.map(d=>`<div class="check-item"><div class="check-icon" style="background:#FCEBEB;color:#A32D2D"><i class="ti ti-x" style="font-size:12px"></i></div><span style="font-size:12px;color:#444441;line-height:1.5">${d}</span></div>`).join('');
+}
+function buildLifeEvents(){
+  document.getElementById('life-events').innerHTML=[['Job loss','Use grace period (30–61 days). Then request a premium loan from cash value. Do NOT lapse — reinstatement requires new underwriting.'],['Divorce','Update beneficiary immediately. Policy loans are not marital debt in most states. Request a full policy review.'],['New baby','Reason to increase coverage, not drop it. Add a child rider. Contact your agent within 90 days of birth.'],['Home purchase','Do not surrender for a down payment. Use a policy loan at a lower rate instead. Your policy is an asset.'],['Medical bills','Check for an accelerated death benefit rider — it may pay out while you are alive. Policy loans can fund medical costs tax-free.']].map(([e,p])=>`<div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #E8E6DF"><div style="background:#E1F5EE;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:#0F6E56;white-space:nowrap;margin-top:1px">${e}</div><p style="font-size:13px;color:#888780;margin:0;line-height:1.6">${p}</p></div>`).join('');
+}
+function calcScore(){
+  const yes=(ST.q1==='y')+(ST.q2==='y')+(ST.q3==='y'),score=Math.min(100,40+yes*10+30);
+  let n=0;const iv=setInterval(()=>{n=Math.min(n+2,score);document.getElementById('sc-num').textContent=n;if(n>=score)clearInterval(iv);},18);
+  const[title,desc,alertHTML]=score>=85
+    ?['Highly confident buyer','Your inputs and engagement across all 5 modules show strong readiness. You understand your policy, have a budget that works, and know what to do when life gets hard.','<div class="a-green"><i class="ti ti-star"></i> <strong>You are ready.</strong> Bring your Protection Number to your agent and ask them to build a policy illustration around that number.</div>']
+    :score>=65
+    ?['Building confidence fast','Solid foundational knowledge and a workable budget. Revisit Module 2 and Module 4 one more time, then schedule your agent call.','<div class="a-blue"><i class="ti ti-check"></i> <strong>Almost there.</strong> Review your premium mapping and cash value timeline, then book your agent meeting.</div>']
+    :['Good start — keep going','You have completed the journey and have a strong foundation. Return to Module 2 with your real numbers and your score will jump significantly.','<div class="a-amber"><i class="ti ti-arrow-right"></i> <strong>Your next move:</strong> Complete the Module 2 calculator with your actual income and expenses.</div>'];
+  document.getElementById('sc-title').textContent=title;
+  document.getElementById('sc-desc').textContent=desc;
+  document.getElementById('sc-alert').innerHTML=alertHTML;
+  document.getElementById('sc-breakdown').innerHTML=`<div class="mbox"><p class="ml">IUL fit check</p><p class="mv">${Math.round(yes/3*100)}%</p></div><div class="mbox"><p class="ml">Modules completed</p><p class="mv">5 / 5</p></div><div class="mbox"><p class="ml">Overall score</p><p class="mv">${score}</p></div>`;
+  document.getElementById('sc-steps').innerHTML=[['1','Take your Protection Number to your agent','Share the monthly figure from the Quick Win. Ask your agent to build a policy illustration around that exact number.'],['2','Ask for the guaranteed illustration column','Insist on seeing the worst-case numbers. Ask: "Can I live with this?" If yes, you are ready to sign.'],['3','Set your annual review date right now','Pick a date — your birthday, January 1st, your policy anniversary — and add it to your calendar before closing this tool.']].map(([n,t,d])=>`<div class="step-item"><div class="step-num">${n}</div><div><p style="font-size:13px;font-weight:500;color:#2C2C2A;margin:0 0 2px">${t}</p><p style="font-size:12px;color:#888780;margin:0;line-height:1.5">${d}</p></div></div>`).join('');
+}
+buildProg();qwCalc();
+</script>
+</body>
+</html>
